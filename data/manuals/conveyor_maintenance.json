@@ -1,0 +1,93 @@
+
+[
+  {
+    "id": "PROC-001",
+    "title": "Conveyor Jam and Obstruction",
+    "fault_codes": ["OVERCURRENT", "LOW_RPM"],
+    "keywords": ["jam", "obstruction", "foreign object", "stuck"],
+    "symptoms": "Motor current rises while conveyor speed drops. A foreign object or trapped product may be visible.",
+    "procedure": [
+      "Confirm the conveyor is stopped by the deterministic controller.",
+      "Keep restart authorization disabled while the obstruction remains unresolved.",
+      "Notify the operator and request a visual inspection.",
+      "Require an authorized person to follow the site's isolation and lockout procedure before any physical intervention.",
+      "After the obstruction is resolved by authorized personnel, obtain fresh sensor readings.",
+      "Require fault acknowledgement, successful interlock checks, and explicit operator approval before a simulated restart."
+    ],
+    "restart_policy": "Never restart automatically based only on AI observations."
+  },
+  {
+    "id": "PROC-002",
+    "title": "Motor Overheating",
+    "fault_codes": ["OVERHEATING"],
+    "keywords": ["overheating", "temperature", "motor", "heat"],
+    "symptoms": "Motor temperature exceeds the simulated safety threshold.",
+    "procedure": [
+      "Confirm the deterministic controller has stopped the machine.",
+      "Do not bypass temperature interlocks.",
+      "Notify authorized maintenance personnel.",
+      "Investigate possible overload, cooling problems, and abnormal operating conditions using approved site procedures.",
+      "Require fresh normal temperature readings and verified interlocks before requesting restart approval."
+    ],
+    "restart_policy": "A temperature returning to normal does not automatically clear a latched fault."
+  },
+  {
+    "id": "PROC-003",
+    "title": "High Vibration",
+    "fault_codes": ["HIGH_VIBRATION"],
+    "keywords": ["vibration", "bearing", "alignment", "mechanical"],
+    "symptoms": "The simulated vibration measurement exceeds the configured limit.",
+    "procedure": [
+      "Confirm the conveyor has stopped.",
+      "Do not attempt an automatic restart.",
+      "Request inspection by authorized maintenance personnel.",
+      "Check for possible alignment or bearing issues under approved maintenance procedures.",
+      "Require acceptable fresh readings and deterministic safety validation before restart approval."
+    ],
+    "restart_policy": "AI cannot authorize operation while vibration faults are active."
+  },
+  {
+    "id": "PROC-004",
+    "title": "Misaligned Product",
+    "fault_codes": ["LOW_RPM"],
+    "keywords": ["misaligned", "rotated", "guide", "product"],
+    "symptoms": "A product appears rotated, displaced, or contacting a conveyor guide.",
+    "procedure": [
+      "Record the visual observation as a suspected misalignment.",
+      "Confirm machine state using the deterministic controller.",
+      "Request operator inspection of the product and guide area.",
+      "Require approved isolation procedures before any physical adjustment.",
+      "Use fresh sensor readings and operator approval before any simulated restart."
+    ],
+    "restart_policy": "Visual alignment alone does not establish safe restart conditions."
+  },
+  {
+    "id": "PROC-005",
+    "title": "Emergency Stop and Guard Interlock",
+    "fault_codes": ["EMERGENCY_STOP", "GUARD_OPEN"],
+    "keywords": ["emergency", "e-stop", "guard", "door", "interlock"],
+    "symptoms": "An emergency-stop input is active or the protective guard is open.",
+    "procedure": [
+      "Maintain the stopped state.",
+      "Do not bypass the emergency-stop or guard interlock.",
+      "Require authorized personnel to determine why the safety device was activated.",
+      "Restore the safety device only after the underlying hazard has been addressed.",
+      "Require fault acknowledgement, interlock validation, and explicit approval before simulated restart."
+    ],
+    "restart_policy": "Releasing an emergency stop or closing a guard never automatically restarts the conveyor."
+  },
+  {
+    "id": "PROC-006",
+    "title": "Invalid or Stale Sensor Data",
+    "fault_codes": ["INVALID_SENSOR_DATA", "STALE_SENSOR_DATA"],
+    "keywords": ["invalid", "stale", "sensor", "missing", "telemetry"],
+    "symptoms": "Sensor readings are missing, invalid, inconsistent, or too old for a recovery decision.",
+    "procedure": [
+      "Do not authorize restart using invalid or stale readings.",
+      "Request a fresh sensor acquisition.",
+      "Notify the operator if the sensor problem persists.",
+      "Validate the data and safety interlocks before requesting restart approval."
+    ],
+    "restart_policy": "Missing or stale safety evidence must not be interpreted as a safe condition."
+  }
+]

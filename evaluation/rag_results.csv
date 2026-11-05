@@ -1,0 +1,7 @@
+query,expected,predicted,correct
+"Foreign object blocking conveyor, high current and low speed",PROC-001,PROC-001,True
+Motor temperature too high and overheating,PROC-002,PROC-002,True
+Excessive vibration near motor bearings,PROC-003,PROC-003,True
+Product is rotated and touching the guide rail,PROC-004,PROC-004,True
+Emergency stop activated and guard door open,PROC-005,PROC-005,True
+Sensor readings are missing or stale,PROC-006,PROC-006,True
