@@ -1,0 +1,6 @@
+scenario,expected_success,actual_success,passed,machine_state,tree_status
+normal_recovery,True,True,True,RUNNING,SUCCESS
+unresolved_fault,False,False,True,STOPPED_FAULT,RUNNING
+emergency_stop,False,False,True,STOPPED_EMERGENCY,FAILURE
+open_guard,False,False,True,STOPPED_FAULT,FAILURE
+stale_readings,False,False,True,READY_FOR_REVIEW,RUNNING
