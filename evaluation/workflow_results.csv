@@ -1,0 +1,6 @@
+scenario,expected,actual,passed,latency_seconds,node_count,error_count
+normal,ADVISORY_READY,ADVISORY_READY,True,0.0102,6,0
+vision_failure,ADVISORY_READY,ADVISORY_READY,True,0.0033,6,1
+no_documents,ADVISORY_READY,ADVISORY_READY,True,0.0067,5,0
+advisor_failure,ADVISORY_READY,ADVISORY_READY,True,0.0024,6,1
+invalid_input,INVALID_INPUT,INVALID_INPUT,True,0.0013,1,1
