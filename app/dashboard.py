@@ -20,10 +20,16 @@ from app.dashboard_utils import (
     make_sensor_record,
     state_label,
 )
+
 from src.simulator.machine import get_reading
 from src.agents.workflow import build_workflow
 from src.agents.schemas import DiagnosticReport
 from src.recovery.runner import RecoveryRunner
+
+from src.storage.database import FactoryGuardDatabase
+from src.storage.event_logger import EventLogger
+from src.storage.diagnostic_store import DiagnosticStore
+from src.storage.recovery_logger import RecoveryLogger
 
 
 # ==================================================
@@ -50,6 +56,35 @@ machine = state["machine"]
 
 
 # ==================================================
+# DAY 9 - STEP 9: RECOVERY AUDIT HELPER
+# ==================================================
+
+def log_recovery_action(
+    state,
+    action,
+    result,
+    details=None,
+):
+    machine = state["machine"]
+
+    try:
+        return RecoveryLogger().log(
+            machine_id=machine.machine_id,
+            action=action,
+            result=result,
+            machine_state=machine.state.value,
+            details=details,
+        )
+
+    except Exception as exc:
+        state["audit_logging_failed"] = True
+        state["last_error"] = (
+            f"Recovery audit failed: {exc}"
+        )
+        return None
+
+
+# ==================================================
 # 3. DASHBOARD HEADER
 # ==================================================
 
@@ -64,6 +99,36 @@ st.warning(
     "SIMULATION ONLY: This dashboard is not connected "
     "to physical industrial equipment."
 )
+
+
+# ==================================================
+# DAY 9 - STEP 11: AUDIT HEALTH WARNING
+# ==================================================
+
+if state.get("audit_logging_failed", False):
+    st.error(
+        "AUDIT SYSTEM DEGRADED: "
+        "Persistent logging failed. "
+        "Simulated restart is disabled."
+    )
+
+
+# ==================================================
+# DAY 9 - STEP 11: DATABASE HEALTH INDICATOR
+# ==================================================
+
+try:
+    database_healthy = (
+        FactoryGuardDatabase().health_check()
+    )
+except Exception:
+    database_healthy = False
+
+if database_healthy:
+    st.caption("SQLite connection: available")
+else:
+    st.error("SQLite connection: unavailable")
+    state["audit_logging_failed"] = True
 
 
 # ==================================================
@@ -337,6 +402,7 @@ with st.expander(
 
 # ==================================================
 # 12. RUN AI DIAGNOSIS
+# DAY 9 - STEP 8: SQLITE DIAGNOSTIC PERSISTENCE
 # ==================================================
 
 if st.button(
@@ -407,6 +473,33 @@ if st.button(
                 )
 
             state["diagnostic_report"] = report
+
+            # ==========================================
+            # DAY 9 - STEP 8
+            # PERSIST DIAGNOSTIC REPORT TO SQLITE
+            # ==========================================
+
+            try:
+                diagnostic_id = DiagnosticStore().save(
+                    report
+                )
+
+                add_event(
+                    state,
+                    "DIAGNOSTIC_SAVED",
+                    f"Diagnostic report stored with ID {diagnostic_id}",
+                )
+
+            except Exception as exc:
+                state["audit_logging_failed"] = True
+                state["last_error"] = (
+                    f"Diagnostic persistence failed: {exc}"
+                )
+
+                st.error(
+                    "Diagnostic report generated but "
+                    "could not be saved to SQLite."
+                )
 
             # A recovery runner is created only
             # for a fault-stopped machine.
@@ -743,6 +836,7 @@ if graph_result is not None:
 # ==================================================
 # 15. CONTROLLED RECOVERY
 # DAY 8 - STEP 10
+# DAY 9 - STEP 9: RECOVERY AUDIT LOGGING
 # ==================================================
 
 st.divider()
@@ -804,6 +898,7 @@ else:
 
     # ----------------------------------------------
     # 17. STEP 1 - ACKNOWLEDGE FAULT
+    # DAY 9 - STEP 9.1
     # ----------------------------------------------
 
     st.markdown(
@@ -828,6 +923,13 @@ else:
             runner.acknowledge()
 
             result = runner.tick()
+
+            log_recovery_action(
+                state,
+                action="ACKNOWLEDGE_FAULT",
+                result=result["status"],
+                details=result,
+            )
 
             add_event(
                 state,
@@ -856,6 +958,7 @@ else:
 
     # ----------------------------------------------
     # 18. STEP 2 - SIMULATED FAULT RESOLUTION
+    # DAY 9 - STEP 9.2
     # ----------------------------------------------
 
     st.markdown(
@@ -918,6 +1021,13 @@ else:
 
             result = runner.tick()
 
+            log_recovery_action(
+                state,
+                action="FAULT_RESOLUTION",
+                result=result["status"],
+                details=result,
+            )
+
             add_event(
                 state,
                 "RECOVERY",
@@ -973,12 +1083,21 @@ else:
         "#### Step 3 — Explicit Restart Approval"
     )
 
-    if ready:
+    if ready and not state.get(
+        "audit_logging_failed", False
+    ):
         st.success(
             "Controller readiness conditions are "
             "satisfied. Operator restart approval "
             "may now be requested."
         )
+
+    elif state.get("audit_logging_failed", False):
+        st.error(
+            "Restart unavailable: persistent "
+            "audit logging is degraded."
+        )
+
     else:
         st.warning(
             "Restart approval is unavailable until "
@@ -988,6 +1107,7 @@ else:
 
     # ----------------------------------------------
     # 20. APPROVE SIMULATED RESTART
+    # DAY 9 - STEP 9.3 AND STEP 11
     # ----------------------------------------------
 
     if st.button(
@@ -996,58 +1116,99 @@ else:
         disabled=(
             not ready
             or runner.context.recovery_completed
+            or state.get("audit_logging_failed", False)
         ),
     ):
 
         try:
 
-            # The runner must independently
-            # validate restart authorization.
-
-            approved = runner.approve_restart()
-
-            if approved:
-
-                # The behaviour tree performs
-                # its own safety checks before
-                # invoking controlled recovery.
-
-                result = runner.tick()
-
-                add_event(
-                    state,
-                    "RESTART",
-                    (
-                        f"{result['status']} "
-                        f"— {result['message']}"
-                    ),
+            if state.get("audit_logging_failed", False):
+                st.error(
+                    "Restart blocked: audit logging is degraded."
                 )
 
-                if result["status"] == "SUCCESS":
+            else:
+                request_id = log_recovery_action(
+                    state,
+                    action="RESTART_REQUEST",
+                    result="REQUESTED",
+                )
 
-                    st.success(
-                        "Simulated recovery completed"
+                if request_id is None:
+                    st.error(
+                        "Restart blocked: request was not "
+                        "durably recorded."
                     )
 
                 else:
+                    approved = runner.approve_restart()
 
-                    st.warning(
-                        result["message"]
-                    )
+                    if approved:
+                        approval_id = log_recovery_action(
+                            state,
+                            action="RESTART_APPROVAL",
+                            result="APPROVED",
+                        )
 
-            else:
+                        if approval_id is None:
+                            # No restart tick is executed.
+                            runner.context.operator_restart_approved = False
 
-                add_event(
-                    state,
-                    "RESTART",
-                    "Restart approval rejected",
-                    "WARNING",
-                )
+                            st.error(
+                                "Restart blocked: approval audit failed."
+                            )
 
-                st.error(
-                    "Safety conditions do not "
-                    "permit approval"
-                )
+                        else:
+                            result = runner.tick()
+
+                            outcome_id = log_recovery_action(
+                                state,
+                                action="RESTART_OUTCOME",
+                                result=result["status"],
+                                details=result,
+                            )
+
+                            if outcome_id is None:
+                                st.error(
+                                    "Recovery outcome could not be "
+                                    "persisted. Audit system degraded."
+                                )
+
+                            add_event(
+                                state,
+                                "RESTART",
+                                (
+                                    f"{result['status']} "
+                                    f"— {result['message']}"
+                                ),
+                            )
+
+                            if result["status"] == "SUCCESS":
+                                st.success(
+                                    "Simulated restart completed"
+                                )
+                            else:
+                                st.warning(
+                                    result["message"]
+                                )
+
+                    else:
+                        log_recovery_action(
+                            state,
+                            action="RESTART_APPROVAL",
+                            result="REJECTED",
+                        )
+
+                        add_event(
+                            state,
+                            "RESTART",
+                            "Restart approval rejected",
+                            "WARNING",
+                        )
+
+                        st.error(
+                            "Safety conditions rejected approval."
+                        )
 
             st.rerun()
 
@@ -1177,5 +1338,78 @@ with st.expander("Raw machine status"):
 
 
 # ==================================================
-# END OF DAY 8 - STEP 11 DASHBOARD
+# DAY 9 - STEP 10: PERSISTENT AUDIT HISTORY
+# ==================================================
+
+st.divider()
+st.subheader("Persistent Audit History")
+
+try:
+    tab1, tab2, tab3 = st.tabs([
+        "Events",
+        "Diagnostics",
+        "Recovery Actions",
+    ])
+
+    with tab1:
+        events = EventLogger().recent(100)
+
+        if events:
+            event_df = pd.DataFrame(events)
+
+            st.dataframe(
+                event_df,
+                use_container_width=True,
+                hide_index=True,
+            )
+
+            st.download_button(
+                "Download SQLite Events",
+                event_df.to_csv(index=False),
+                file_name="factoryguard_db_events.csv",
+                mime="text/csv",
+            )
+
+        else:
+            st.info("No persisted events yet.")
+
+    with tab2:
+        diagnostics = DiagnosticStore().recent(50)
+
+        if diagnostics:
+            for record in diagnostics:
+                with st.expander(
+                    f"#{record['id']} — "
+                    f"{record['primary_diagnosis']} "
+                    f"({record['severity']})"
+                ):
+                    st.json(record["report"])
+
+        else:
+            st.info("No saved diagnoses yet.")
+
+    with tab3:
+        recovery_actions = RecoveryLogger().recent(100)
+
+        if recovery_actions:
+            st.dataframe(
+                pd.DataFrame(recovery_actions),
+                use_container_width=True,
+                hide_index=True,
+            )
+
+        else:
+            st.info("No recovery actions yet.")
+
+except Exception as exc:
+    state["audit_logging_failed"] = True
+    state["last_error"] = str(exc)
+
+    st.error(
+        f"Persistent audit history unavailable: {exc}"
+    )
+
+
+# ==================================================
+# END OF DAY 9 - STEPS 8, 9, 10 AND 11 DASHBOARD
 # ==================================================

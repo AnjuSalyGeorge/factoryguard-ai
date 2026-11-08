@@ -1,6 +1,7 @@
 
 from src.simulator.conveyor import ConveyorMachine
 from src.simulator.machine import get_reading
+from src.storage.event_logger import EventLogger
 
 from app.dashboard_utils import (
     make_event,
@@ -56,6 +57,7 @@ def new_dashboard_state():
         "recovery_runner": None,
         "last_error": None,
         "analysis_pending": False,
+        "audit_logging_failed": False,
     }
 
 
@@ -64,9 +66,45 @@ def reset_dashboard_state():
 
 
 def add_event(state, event_type, message, level="INFO"):
-    state["events"].append(
-        make_event(event_type, message, level)
+    event = make_event(
+        event_type,
+        message,
+        level,
     )
+
+    state["events"].append(event)
+
+    machine = state.get("machine")
+
+    machine_id = None
+    machine_state = None
+
+    if machine is not None:
+        status = machine.get_status()
+
+        machine_id = status.get("machine_id")
+        machine_state = status.get("state")
+
+    try:
+        logger = EventLogger()
+
+        logger.log(
+            event_type=event_type,
+            message=message,
+            status=level,
+            machine_id=machine_id,
+            machine_state=machine_state,
+        )
+
+    except Exception as exc:
+        state["last_error"] = (
+            f"Audit logging failed: {exc}"
+        )
+
+        # The event remains in session memory,
+        # but it is not durably recorded.
+        # The dashboard must display this failure.
+        state["audit_logging_failed"] = True
 
 
 def apply_scenario(state, scenario: str):
