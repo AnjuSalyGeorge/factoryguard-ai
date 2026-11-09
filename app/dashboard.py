@@ -1,4 +1,3 @@
-
 import json
 import traceback
 from pathlib import Path
@@ -24,7 +23,11 @@ from app.dashboard_utils import (
 from src.simulator.machine import get_reading
 from src.agents.workflow import build_workflow
 from src.agents.schemas import DiagnosticReport
+from src.agents.report_binding import bind_report
 from src.recovery.runner import RecoveryRunner
+
+from src.recovery.audit_gate import check_restart_preconditions
+
 
 from src.storage.database import FactoryGuardDatabase
 from src.storage.event_logger import EventLogger
@@ -417,6 +420,8 @@ if st.button(
     state["diagnostic_report"] = None
     state["graph_result"] = None
     state["recovery_runner"] = None
+    state["bound_diagnostic"] = None
+    state["approval_manager"].invalidate()
     state["last_error"] = None
     state["analysis_pending"] = True
 
@@ -501,6 +506,18 @@ if st.button(
                     "could not be saved to SQLite."
                 )
 
+            # DAY 10 - STEP 7.3: BIND DIAGNOSIS TO FAULT EPISODE
+            episode = state["episode_tracker"].observe(
+                machine.get_status()
+            )
+            if episode is not None:
+                state["bound_diagnostic"] = bind_report(
+                    report,
+                    episode,
+                )
+            else:
+                state["bound_diagnostic"] = None
+
             # A recovery runner is created only
             # for a fault-stopped machine.
             #
@@ -565,6 +582,7 @@ if st.button(
         state["last_error"] = full_traceback
 
         state["diagnostic_report"] = None
+        state["bound_diagnostic"] = None
         state["recovery_runner"] = None
 
         add_event(
@@ -604,6 +622,13 @@ if report is not None:
     st.divider()
 
     st.subheader("Diagnostic Report")
+
+    # DAY 10 - STEP 7.4: SHOW CURRENT FAULT EPISODE
+    episode = state["episode_tracker"].current
+    if episode is not None:
+        st.caption(
+            f"Active fault episode: {episode.episode_id}"
+        )
 
     report_data = report.to_dict()
 
@@ -1110,6 +1135,13 @@ else:
     # DAY 9 - STEP 9.3 AND STEP 11
     # ----------------------------------------------
 
+    
+    # ----------------------------------------------
+    # 20. APPROVE SIMULATED RESTART
+    # DAY 10 - STEP 8.2
+    # EPISODE-BOUND, AUDIT-AWARE RESTART
+    # ----------------------------------------------
+
     if st.button(
         "3. Approve Simulated Restart",
         use_container_width=True,
@@ -1121,13 +1153,14 @@ else:
     ):
 
         try:
-
             if state.get("audit_logging_failed", False):
                 st.error(
                     "Restart blocked: audit logging is degraded."
                 )
 
             else:
+                # Step 1: Persist restart request.
+
                 request_id = log_recovery_action(
                     state,
                     action="RESTART_REQUEST",
@@ -1141,58 +1174,12 @@ else:
                     )
 
                 else:
+                    # Step 2: Obtain operator approval
+                    # through the existing recovery runner.
+
                     approved = runner.approve_restart()
 
-                    if approved:
-                        approval_id = log_recovery_action(
-                            state,
-                            action="RESTART_APPROVAL",
-                            result="APPROVED",
-                        )
-
-                        if approval_id is None:
-                            # No restart tick is executed.
-                            runner.context.operator_restart_approved = False
-
-                            st.error(
-                                "Restart blocked: approval audit failed."
-                            )
-
-                        else:
-                            result = runner.tick()
-
-                            outcome_id = log_recovery_action(
-                                state,
-                                action="RESTART_OUTCOME",
-                                result=result["status"],
-                                details=result,
-                            )
-
-                            if outcome_id is None:
-                                st.error(
-                                    "Recovery outcome could not be "
-                                    "persisted. Audit system degraded."
-                                )
-
-                            add_event(
-                                state,
-                                "RESTART",
-                                (
-                                    f"{result['status']} "
-                                    f"— {result['message']}"
-                                ),
-                            )
-
-                            if result["status"] == "SUCCESS":
-                                st.success(
-                                    "Simulated restart completed"
-                                )
-                            else:
-                                st.warning(
-                                    result["message"]
-                                )
-
-                    else:
+                    if not approved:
                         log_recovery_action(
                             state,
                             action="RESTART_APPROVAL",
@@ -1210,9 +1197,148 @@ else:
                             "Safety conditions rejected approval."
                         )
 
+                    else:
+                        # Step 3: Persist explicit approval
+                        # before creating any approval token.
+
+                        approval_id = log_recovery_action(
+                            state,
+                            action="RESTART_APPROVAL",
+                            result="APPROVED",
+                        )
+
+                        if approval_id is None:
+                            runner.context.operator_restart_approved = False
+                            state["approval_manager"].invalidate()
+
+                            st.error(
+                                "Restart blocked: approval audit failed."
+                            )
+
+                        else:
+                            # Step 4: Recheck current safety,
+                            # episode binding, operator state,
+                            # and audit health.
+
+                            episode = state["episode_tracker"].current
+
+                            decision = check_restart_preconditions(
+                                machine_status=machine.get_status(),
+                                episode=episode,
+                                bound_diagnostic=state.get(
+                                    "bound_diagnostic"
+                                ),
+                                runner=runner,
+                                audit_healthy=not state.get(
+                                    "audit_logging_failed",
+                                    False,
+                                ),
+                            )
+
+                            if not decision.allowed:
+                                state["approval_manager"].invalidate()
+                                runner.context.operator_restart_approved = False
+
+                                log_recovery_action(
+                                    state,
+                                    action="RESTART_BLOCKED",
+                                    result="REJECTED",
+                                    details={
+                                        "reasons": list(decision.reasons)
+                                    },
+                                )
+
+                                st.error(
+                                    "Restart rejected: "
+                                    + "; ".join(decision.reasons)
+                                )
+
+                            else:
+                                # Step 5: Create the episode-bound
+                                # one-time approval token only after
+                                # durable approval logging.
+
+                                if episode is None:
+                                    raise RuntimeError(
+                                        "No active fault episode"
+                                    )
+
+                                state["approval_manager"].approve(
+                                    episode.episode_id
+                                )
+
+                                # Step 6: Consume the token
+                                # before executing recovery.
+
+                                if not state["approval_manager"].consume(
+                                    episode.episode_id
+                                ):
+                                    runner.context.operator_restart_approved = False
+
+                                    raise RuntimeError(
+                                        "Approval token invalid"
+                                    )
+
+                                # Step 7: Execute the existing
+                                # Day 6 recovery runner.
+                                # The deterministic safety controller
+                                # remains authoritative.
+
+                                result = runner.tick()
+
+                                # Step 8: Persist the recovery outcome.
+
+                                outcome_id = log_recovery_action(
+                                    state,
+                                    action="RESTART_OUTCOME",
+                                    result=result["status"],
+                                    details={
+                                        "recovery_result": result,
+                                        "episode_id": episode.episode_id,
+                                        "machine_state": machine.state.value,
+                                    },
+                                )
+
+                                if outcome_id is None:
+                                    st.error(
+                                        "Recovery outcome could not be "
+                                        "persisted. Audit system degraded."
+                                    )
+
+                                add_event(
+                                    state,
+                                    "RESTART",
+                                    (
+                                        f"{result['status']} "
+                                        f"— {result['message']}"
+                                    ),
+                                )
+
+                                if result["status"] == "SUCCESS":
+                                    state["episode_tracker"].observe(
+                                        machine.get_status()
+                                    )
+
+                                    st.success(
+                                        "Simulated restart completed"
+                                    )
+                                else:
+                                    st.warning(
+                                        result["message"]
+                                    )
+
             st.rerun()
 
         except Exception as exc:
+            state["approval_manager"].invalidate()
+            runner.context.operator_restart_approved = False
+
+            log_recovery_action(
+                state,
+                action="RESTART_ERROR",
+                result="ERROR",
+                details={"error": str(exc)},
+            )
 
             add_event(
                 state,
@@ -1224,6 +1350,7 @@ else:
             st.error(
                 f"Simulated restart failed: {exc}"
             )
+
 
     # ----------------------------------------------
     # 21. FINAL RECOVERY STATUS

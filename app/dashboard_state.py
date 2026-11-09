@@ -3,6 +3,10 @@ from src.simulator.conveyor import ConveyorMachine
 from src.simulator.machine import get_reading
 from src.storage.event_logger import EventLogger
 
+# Day 10: Fault episode and approval tracking
+from src.safety.episode import FaultEpisodeTracker
+from src.recovery.approval import ApprovalManager
+
 from app.dashboard_utils import (
     make_event,
     make_sensor_record,
@@ -40,6 +44,10 @@ def new_dashboard_state():
 
     status = get_dashboard_status(machine)
 
+    # Day 10: Track the active fault episode.
+    episode_tracker = FaultEpisodeTracker()
+    episode_tracker.observe(machine.get_status())
+
     return {
         "machine": machine,
         "scenario": "normal",
@@ -58,6 +66,11 @@ def new_dashboard_state():
         "last_error": None,
         "analysis_pending": False,
         "audit_logging_failed": False,
+
+        # Day 10: Episode-bound recovery state
+        "episode_tracker": episode_tracker,
+        "bound_diagnostic": None,
+        "approval_manager": ApprovalManager(),
     }
 
 
@@ -133,8 +146,37 @@ def apply_scenario(state, scenario: str):
 
     state["scenario"] = scenario
 
-    # Previous diagnostic evidence must not be
-    # silently reused after new sensor input.
+    # Day 10: Observe the new machine state and
+    # identify whether the fault episode changed.
+    tracker = state["episode_tracker"]
+
+    previous_episode = tracker.current
+    current_episode = tracker.observe(
+        machine.get_status()
+    )
+
+    previous_id = (
+        previous_episode.episode_id
+        if previous_episode is not None
+        else None
+    )
+
+    current_id = (
+        current_episode.episode_id
+        if current_episode is not None
+        else None
+    )
+
+    if previous_id != current_id:
+        state["approval_manager"].invalidate()
+
+    # Any scenario change can make the existing
+    # diagnostic evidence outdated, even when
+    # the fault episode ID remains unchanged.
+    state["bound_diagnostic"] = None
+    state["approval_manager"].invalidate()
+
+    # Preserve the existing Day 8/9 reset logic.
     state["diagnostic_report"] = None
     state["graph_result"] = None
     state["recovery_runner"] = None
