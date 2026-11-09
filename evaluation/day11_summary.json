@@ -1,0 +1,30 @@
+{
+  "generated_at": "2026-11-09T06:39:40.281697+00:00",
+  "evaluation_type": "Synthetic prototype evaluation",
+  "fault_detection": {
+    "passed": 4,
+    "total": 4,
+    "accuracy": 1.0
+  },
+  "diagnostics": {
+    "correct": 4,
+    "completed": 4,
+    "total": 4,
+    "accuracy": 1.0
+  },
+  "rag": {
+    "hits": 3,
+    "total": 3,
+    "hit_at_3": 1.0
+  },
+  "safety": {
+    "blocked": 12,
+    "total": 12,
+    "block_rate": 1.0
+  },
+  "latency": {
+    "completed_runs": 3,
+    "total_runs": 3,
+    "mean_seconds": 46.42
+  }
+}

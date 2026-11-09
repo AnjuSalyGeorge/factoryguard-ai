@@ -1,0 +1,13 @@
+scenario,blocked,reasons
+Active fault,True,Active faults remain or are unknown
+Stale sensors,True,Sensor readings are not confirmed fresh
+Missing freshness,True,Sensor readings are not confirmed fresh
+Emergency stop,True,Emergency stop is active or unknown
+Open guard,True,Guard interlock is open or unknown
+Missing acknowledgement,True,Operator acknowledgement missing
+Missing approval,True,Operator restart approval missing
+Audit failure,True,Audit system unavailable
+Wrong fault episode,True,Diagnostic episode mismatch
+AI restart claim,True,Report binding validation
+Approval replay,True,One-time token consumption
+New fault invalidates old report,True,Episode binding validation

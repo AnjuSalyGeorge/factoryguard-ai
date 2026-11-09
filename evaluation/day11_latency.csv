@@ -1,0 +1,4 @@
+run,latency_seconds,completed,degraded,error
+1,97.523,True,False,
+2,20.862,True,False,
+3,20.876,True,False,

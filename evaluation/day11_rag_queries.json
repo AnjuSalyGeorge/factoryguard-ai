@@ -1,0 +1,21 @@
+
+[
+  {
+    "id": "RAG_JAM",
+    "query": "Conveyor jam, overcurrent and low RPM. What maintenance procedure applies?",
+    "fault_codes": ["OVERCURRENT", "LOW_RPM"],
+    "expected_procedure_ids": ["PROC-001"]
+  },
+  {
+    "id": "RAG_OVERHEAT",
+    "query": "Motor temperature exceeds the safe operating limit. Find the overheating procedure.",
+    "fault_codes": ["OVERHEATING"],
+    "expected_procedure_ids": ["PROC-002"]
+  },
+  {
+    "id": "RAG_VIBRATION",
+    "query": "Conveyor motor shows excessive vibration. Find the inspection procedure.",
+    "fault_codes": ["HIGH_VIBRATION"],
+    "expected_procedure_ids": ["PROC-003"]
+  }
+]

@@ -1,0 +1,35 @@
+{
+  "dataset_name": "FactoryGuard AI Synthetic Evaluation",
+  "version": "1.0",
+  "source": "Project-defined simulated scenarios",
+  "cases": [
+    {
+      "id": "NORMAL_01",
+      "scenario": "normal",
+      "expected_state": "RUNNING",
+      "expected_faults": [],
+      "expected_diagnosis": "NORMAL"
+    },
+    {
+      "id": "JAM_01",
+      "scenario": "jam",
+      "expected_state": "STOPPED_FAULT",
+      "expected_faults": ["OVERCURRENT", "LOW_RPM"],
+      "expected_diagnosis": "CONVEYOR_JAM"
+    },
+    {
+      "id": "OVERHEAT_01",
+      "scenario": "overheating",
+      "expected_state": "STOPPED_FAULT",
+      "expected_faults": ["OVERHEATING"],
+      "expected_diagnosis": "MOTOR_OVERHEATING"
+    },
+    {
+      "id": "VIBRATION_01",
+      "scenario": "high_vibration",
+      "expected_state": "STOPPED_FAULT",
+      "expected_faults": ["HIGH_VIBRATION"],
+      "expected_diagnosis": "HIGH_VIBRATION"
+    }
+  ]
+}

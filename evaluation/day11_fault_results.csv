@@ -1,0 +1,5 @@
+case_id,scenario,expected_state,actual_state,expected_faults,actual_faults,state_correct,faults_correct,passed
+NORMAL_01,normal,RUNNING,RUNNING,,,True,True,True
+JAM_01,jam,STOPPED_FAULT,STOPPED_FAULT,"LOW_RPM,OVERCURRENT","LOW_RPM,OVERCURRENT",True,True,True
+OVERHEAT_01,overheating,STOPPED_FAULT,STOPPED_FAULT,OVERHEATING,OVERHEATING,True,True,True
+VIBRATION_01,high_vibration,STOPPED_FAULT,STOPPED_FAULT,HIGH_VIBRATION,HIGH_VIBRATION,True,True,True
