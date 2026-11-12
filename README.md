@@ -12,7 +12,7 @@ FactoryGuard AI combines offline AI-assisted industrial fault diagnosis with det
 
 
 
-Built for the \*\*GDG Windsor Build with AI — Smart Automation, Robotics, and Vision Hackathon (November 2026)\*\*.
+Built for the **GDG Windsor Build with AI — Smart Automation, Robotics, and Vision Hackathon (November 2026)**.
 
 
 
@@ -40,27 +40,27 @@ FactoryGuard AI combines:
 
 
 
-\- Deterministic sensor monitoring and fault detection
+- Deterministic sensor monitoring and fault detection
 
-\- A locally executed vision-language model
+- A locally executed vision-language model
 
-\- Retrieval-augmented maintenance guidance
+- Retrieval-augmented maintenance guidance
 
-\- LangGraph-based diagnostic orchestration
+- LangGraph-based diagnostic orchestration
 
-\- Behavior-tree-based simulated recovery
+- Behavior-tree-based simulated recovery
 
-\- Operator acknowledgement and explicit approval
+- Operator acknowledgement and explicit approval
 
-\- Fault-episode-bound recovery authorization
+- Fault-episode-bound recovery authorization
 
-\- Persistent diagnostic and audit records
+- Persistent diagnostic and audit records
 
-\- An interactive Streamlit dashboard
+- An interactive Streamlit dashboard
 
 
 
-\*\*Core safety principle: AI provides advisory information; deterministic controls enforce machine safety.\*\*
+**Core safety principle: AI provides advisory information; deterministic controls enforce machine safety.**
 
 
 
@@ -72,43 +72,43 @@ FactoryGuard AI combines:
 
 flowchart TD
 
-&#x20;   A\[Simulated Industrial Machine] --> B\[Sensor Readings and Scenario Images]
+    A[Simulated Industrial Machine] --> B[Sensor Readings and Scenario Images]
 
-&#x20;   B --> C\[Deterministic Safety Controller]
+    B --> C[Deterministic Safety Controller]
 
-&#x20;   B --> D\[LangGraph Diagnostic Workflow]
-
-
-
-&#x20;   D --> E\[Local Gemma 3 Vision Analysis]
-
-&#x20;   D --> F\[Maintenance Document Retrieval]
-
-&#x20;   F --> G\[Local Gemma 3 Maintenance Advisor]
-
-&#x20;   E --> H\[Diagnostic Agent]
-
-&#x20;   G --> H
-
-&#x20;   C --> H
+    B --> D[LangGraph Diagnostic Workflow]
 
 
 
-&#x20;   H --> I\[Structured Diagnostic Report]
+    D --> E[Local Gemma 3 Vision Analysis]
 
-&#x20;   I --> J\[Streamlit Dashboard and Audit History]
+    D --> F[Maintenance Document Retrieval]
 
-&#x20;   I --> K\[Operator Review]
+    F --> G[Local Gemma 3 Maintenance Advisor]
+
+    E --> H[Diagnostic Agent]
+
+    G --> H
+
+    C --> H
 
 
 
-&#x20;   C --> L\[Deterministic Recovery Checks]
+    H --> I[Structured Diagnostic Report]
 
-&#x20;   K --> L
+    I --> J[Streamlit Dashboard and Audit History]
 
-&#x20;   L --> M\[Behavior-Tree Simulated Recovery]
+    I --> K[Operator Review]
 
-&#x20;   M --> N\[Simulated Machine State]
+
+
+    C --> L[Deterministic Recovery Checks]
+
+    K --> L
+
+    L --> M[Behavior-Tree Simulated Recovery]
+
+    M --> N[Simulated Machine State]
 
 ```
 
@@ -164,7 +164,7 @@ Invalid input and unavailable AI components are handled without granting restart
 
 | Maintenance retrieval | Local document retrieval and embeddings |
 
-| Recovery orchestration | py\_trees |
+| Recovery orchestration | py_trees |
 
 | Deterministic safety | Python safety controller and interlocks |
 
@@ -220,11 +220,11 @@ factoryguard-ai/
 
 ├── docs/
 
-├── day6\_diagnostic\_demo.py
+├── day6_diagnostic_demo.py
 
-├── day7\_demo.py
+├── day7_demo.py
 
-├── day10\_demo.py
+├── day10_demo.py
 
 ├── requirements.txt
 
@@ -242,15 +242,15 @@ Recommended development environment:
 
 
 
-\- Windows 10 or Windows 11
+- Windows 10 or Windows 11
 
-\- Python 3.12
+- Python 3.12
 
-\- Git
+- Git
 
-\- Ollama installed locally
+- Ollama installed locally
 
-\- Sufficient RAM and disk space for local Gemma 3 inference
+- Sufficient RAM and disk space for local Gemma 3 inference
 
 
 
@@ -268,7 +268,7 @@ Inference performance depends on hardware.
 
 ```cmd
 
-git clone <PUBLIC\_GITHUB\_REPOSITORY\_URL>
+git clone https://github.com/AnjuSalyGeorge/factoryguard-ai.git
 
 cd factoryguard-ai
 
@@ -402,11 +402,11 @@ Four predefined simulated machine scenarios are available:
 
 | Normal | 55 °C | 8 A | 2.1 mm/s | 1450 | RUNNING |
 
-| Conveyor jam | 72 °C | 19 A | 5.0 mm/s | 200 | STOPPED\_FAULT |
+| Conveyor jam | 72 °C | 19 A | 5.0 mm/s | 200 | STOPPED_FAULT |
 
-| Overheating | 96 °C | 10 A | 3.0 mm/s | 1400 | STOPPED\_FAULT |
+| Overheating | 96 °C | 10 A | 3.0 mm/s | 1400 | STOPPED_FAULT |
 
-| High vibration | 65 °C | 9 A | 9.2 mm/s | 1350 | STOPPED\_FAULT |
+| High vibration | 65 °C | 9 A | 9.2 mm/s | 1350 | STOPPED_FAULT |
 
 
 
@@ -428,7 +428,7 @@ The safety controller detects unsafe conditions and latches fault states. Return
 
 ```cmd
 
-python day7\_demo.py
+python day7_demo.py
 
 ```
 
@@ -444,7 +444,7 @@ Demonstrates local AI-assisted diagnosis, maintenance retrieval, structured resu
 
 ```cmd
 
-python day6\_diagnostic\_demo.py
+python day6_diagnostic_demo.py
 
 ```
 
@@ -460,7 +460,7 @@ Demonstrates the integrated diagnostic pipeline and operator-controlled simulate
 
 ```cmd
 
-python day10\_demo.py
+python day10_demo.py
 
 ```
 
@@ -496,7 +496,7 @@ python -m pytest -q
 
 ```cmd
 
-python evaluation/evaluate\_faults.py
+python evaluation/evaluate_faults.py
 
 ```
 
@@ -508,7 +508,7 @@ python evaluation/evaluate\_faults.py
 
 ```cmd
 
-python evaluation/evaluate\_safety.py
+python evaluation/evaluate_safety.py
 
 ```
 
@@ -518,13 +518,13 @@ Evaluation artifacts are stored under `evaluation/`, including:
 
 
 
-\- `day11\_summary.json`
+- `day11_summary.json`
 
-\- `day11\_diagnostic\_results.csv`
+- `day11_diagnostic_results.csv`
 
-\- `day11\_latency.csv`
+- `day11_latency.csv`
 
-\- `workflow\_results.csv`
+- `workflow_results.csv`
 
 
 
@@ -572,15 +572,15 @@ These results describe a limited synthetic prototype evaluation, not validated r
 
 
 
-\- The scenario sample size is small.
+- The scenario sample size is small.
 
-\- Fault readings and images are simulated.
+- Fault readings and images are simulated.
 
-\- Local inference latency varies.
+- Local inference latency varies.
 
-\- Vision-language output can disagree with deterministic sensor evidence.
+- Vision-language output can disagree with deterministic sensor evidence.
 
-\- Maintenance recommendations require human verification.
+- Maintenance recommendations require human verification.
 
 
 
@@ -604,19 +604,19 @@ The demonstration included:
 
 
 
-\- Simulated conveyor-jam fault detection
+- Simulated conveyor-jam fault detection
 
-\- Local Gemma 3 inference
+- Local Gemma 3 inference
 
-\- Maintenance document retrieval
+- Maintenance document retrieval
 
-\- AI-generated maintenance guidance
+- AI-generated maintenance guidance
 
-\- Structured diagnostic output
+- Structured diagnostic output
 
-\- Safety-state preservation
+- Safety-state preservation
 
-\- Local diagnostic history
+- Local diagnostic history
 
 
 
@@ -628,7 +628,7 @@ Internet access is needed for initial installation, model downloads, and publish
 
 
 
-\*\*FactoryGuard AI is a software-only research and demonstration prototype. It does not control physical industrial machinery.\*\*
+**FactoryGuard AI is a software-only research and demonstration prototype. It does not control physical industrial machinery.**
 
 
 
@@ -636,25 +636,25 @@ Safety measures demonstrated include:
 
 
 
-\- Deterministic sensor thresholds
+- Deterministic sensor thresholds
 
-\- Latched fault states
+- Latched fault states
 
-\- Sensor freshness checks
+- Sensor freshness checks
 
-\- Emergency-stop and guard-interlock checks
+- Emergency-stop and guard-interlock checks
 
-\- Operator acknowledgement
+- Operator acknowledgement
 
-\- Explicit recovery approval
+- Explicit recovery approval
 
-\- Fault-episode-bound authorization
+- Fault-episode-bound authorization
 
-\- Rejection of stale and replayed approvals
+- Rejection of stale and replayed approvals
 
-\- Audit-related authorization checks
+- Audit-related authorization checks
 
-\- Separation of AI advice from restart permission
+- Separation of AI advice from restart permission
 
 
 
@@ -678,19 +678,19 @@ Project evidence includes:
 
 
 
-\- Dashboard monitoring and scenario injection
+- Dashboard monitoring and scenario injection
 
-\- Normal, jam, overheating, and high-vibration states
+- Normal, jam, overheating, and high-vibration states
 
-\- AI diagnostic reports and retrieved procedures
+- AI diagnostic reports and retrieved procedures
 
-\- Operator-controlled simulated recovery
+- Operator-controlled simulated recovery
 
-\- Safety authorization demonstrations
+- Safety authorization demonstrations
 
-\- Offline inference demonstration
+- Offline inference demonstration
 
-\- Persistent diagnostic history
+- Persistent diagnostic history
 
 
 
@@ -698,15 +698,15 @@ Screenshots and demonstration media will be linked or embedded in the published 
 
 
 
-\*\*Demo video:\*\* To be added after publication.
+**Demo video:** To be added after publication.
 
 
 
-\*\*Kaggle submission:\*\* To be added after publication.
+**Kaggle submission:** To be added after publication.
 
 
 
-\*\*GitHub repository:\*\* To be added after publication.
+**GitHub repository:** To be added after publication.
 
 
 
@@ -722,19 +722,19 @@ The objective is not to replace certified safety systems or maintenance professi
 
 
 
-\---
+---
 
 
 
-\*\*Hackathon:\*\* GDG Windsor — Build with AI: Smart Automation, Robotics, and Vision
+**Hackathon:** GDG Windsor — Build with AI: Smart Automation, Robotics, and Vision
 
 
 
-\*\*Project:\*\* FactoryGuard AI
+**Project:** FactoryGuard AI
 
 
 
-\*\*Deployment:\*\* Local, software-only prototype
+**Deployment:** Local, software-only prototype
 
 
 
