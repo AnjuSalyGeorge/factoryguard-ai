@@ -1,0 +1,61 @@
+
+flowchart TB
+    subgraph MACHINE["LAYER 1 — MACHINE & DETERMINISTIC SAFETY"]
+        direction LR
+        S["Simulated industrial machine<br/>Temperature · Current · Vibration · RPM"]
+        F["Fault detection<br/>Thresholds · Sensor freshness · Fault latch"]
+        C["Independent safety controller<br/>STOPPED_FAULT · Interlocks · Restart restrictions"]
+        S --> F --> C
+    end
+
+    subgraph AI["LAYER 2 — LOCAL AI ADVISORY INTELLIGENCE"]
+        direction LR
+        W["LangGraph diagnostic workflow<br/>Validation and orchestration"]
+        V["Local Gemma 3 via Ollama<br/>Scene / vision analysis"]
+        R["Maintenance RAG<br/>Local documents and embeddings"]
+        A["Local Gemma 3 advisor<br/>Grounded maintenance guidance"]
+        D["Structured diagnostic report<br/>Evidence · Faults · Uncertainty · Procedures"]
+
+        W --> V
+        W --> R
+        R --> A
+        V --> D
+        A --> D
+    end
+
+    subgraph RECOVERY["LAYER 3 — OPERATOR-CONTROLLED SIMULATED RECOVERY"]
+        direction LR
+        O["Operator review<br/>Acknowledgement and explicit approval"]
+        B["Recovery behaviour tree<br/>Simulated recovery sequence"]
+        G["Deterministic authorization gate<br/>Interlocks · Fault episode · One-time approval"]
+        X["Simulated machine recovery"]
+        L[("SQLite diagnostic and audit history")]
+
+        O --> B --> G
+        G -->|"Only if authorized"| X
+        O --> L
+        G --> L
+        X --> L
+    end
+
+    S -->|"Sensor readings and scene context"| W
+    C -->|"Authoritative fault and safety state"| D
+    D -->|"Advisory report only"| O
+    C -->|"Independent safety constraints"| G
+    X -.->|"Updated simulated machine state"| S
+    D -->|"Diagnostic record"| L
+
+    N["SAFETY BOUNDARY: AI cannot override a safety stop or authorize restart."]
+    C --- N
+
+    classDef machine fill:#EAF2FF,stroke:#2563EB,color:#172B4D,stroke-width:2px
+    classDef intelligence fill:#F1EBFF,stroke:#7547C8,color:#172B4D,stroke-width:2px
+    classDef recovery fill:#E7F7F0,stroke:#16805D,color:#172B4D,stroke-width:2px
+    classDef safety fill:#FFF0F0,stroke:#C24141,color:#7F1D1D,stroke-width:3px
+    classDef storage fill:#F3F4F6,stroke:#64748B,color:#172B4D
+
+    class S,F machine
+    class W,V,R,A,D intelligence
+    class O,B,X recovery
+    class C,G,N safety
+    class L storage
